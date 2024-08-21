@@ -3,12 +3,33 @@ import { generateResponse } from "./ai/generate-response"
 import { generateValue } from "./ai/generate-value"
 import { appendFile } from "node:fs/promises"
 import { genText } from "./ai/ai"
+import { parseArgs } from "util"
+
 const outfile = `outputs/${new Date().toISOString().replace(/:/g, "-").replace(/\..+/, "").replace(/T/, "_")}.jsonl`
 
-const count = 50
+const { values } = parseArgs({
+  args: Bun.argv,
+  options: {
+    inputFile: {
+      short: 'i',
+      type: "string",
+      default: "inputs/mixed.txt",
+    },
+    count: {
+      short: 'n',
+      type: "string",
+      default: "50",
+    },
+  },
+  strict: true,
+  allowPositionals: true,
+})
 
-const lines = (await Bun.file('inputs/mixed.txt').text()).split('\n').splice(0, count)
-console.log(`Generating ${count} responses...`)
+const count = parseInt(values.count!)
+const inputFile = values.inputFile!
+const lines = (await Bun.file(inputFile).text()).split('\n').splice(0, count)
+
+console.log(`Generating ${count} responses from ${inputFile}...`)
 
 for await (let [index, q] of lines.entries()) {
   console.log(`### Response ${index + 1}/${count}`)

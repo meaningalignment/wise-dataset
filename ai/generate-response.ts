@@ -3,7 +3,7 @@ import { genObj } from "./ai";
 
 export async function generateResponse(q: string, choiceType: string, policies: string[]) {
   return await genObj({
-    prompt: `You will be provided with something a user might say to a AI chatbot, and a set of considerations that are useful in choosing a certain type of thing. Your task is to think about how an AI chatbot trained to attend to those considerations while helping the user choose that type of thing would reply to what the user said.`,
+    prompt: `You will be provided with something a user might say to an AI chatbot, and a set of considerations that are useful in choosing a certain type of thing. Your task is to think about how an AI chatbot trained to attend to those considerations while helping the user choose that type of thing would reply to what the user said.`,
     data: {
       "User's message": q,
       "Choice Type": choiceType,
@@ -18,3 +18,4 @@ export async function generateResponse(q: string, choiceType: string, policies: 
     })
   })
 }
+
