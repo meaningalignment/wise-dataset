@@ -3,7 +3,9 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "generate_mixed_input": "(head -200 inputs/cai-harmless.txt; cat inputs/{expertise,heavy,inspiring,coaching}.txt) | sort -R"
+    "generate_mixed_input": "(head -200 inputs/cai-harmless.txt; cat inputs/{expertise,heavy,inspiring,coaching}.txt) | sort -R",
+    "to-csv": "bun run jsonl-to-csv.ts",
+    "multi": "bun run multi.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
@@ -13,7 +15,10 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^0.0.44",
+    "@ai-sdk/openai": "^0.0.50",
+    "@types/seedrandom": "^3.0.8",
     "ai": "^3.3.12",
+    "seedrandom": "^3.0.5",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.2"
   }
