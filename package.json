@@ -3,8 +3,7 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "generate_mixed_input": "(head -200 inputs/cai-harmless.txt; cat inputs/{expertise,heavy,inspiring,coaching}.txt) | sort -R",
-    "generate_csv": "dasel -r json -w csv 'all().mapOf(q,q,choiceType,choiceType,policies,policies,response,response,naive_response,naive_response).merge()'"
+    "generate_mixed_input": "(head -200 inputs/cai-harmless.txt; cat inputs/{expertise,heavy,inspiring,coaching}.txt) | sort -R"
   },
   "devDependencies": {
     "@types/bun": "latest"
@@ -14,7 +13,6 @@
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^0.0.44",
-    "@ai-sdk/openai": "^0.0.50",
     "ai": "^3.3.12",
     "zod": "^3.23.8",
     "zod-to-json-schema": "^3.23.2"
