@@ -9,8 +9,6 @@ import { $ } from "bun"
 // USAGE
 // bun index.ts -i inputs/bangers-and-duds.txt -l bangers-and-duds -n 50
 
-// TO DO
-// - we don't need to use dasel at the end to make the csv, we can generate it alongside the json
 // - run the main loop in batches in parallel, using a task runner that shows progress in the console like listr2
 
 const { values } = parseArgs({
