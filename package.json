@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "generate_mixed_input": "(head -200 inputs/cai-harmless.txt; cat inputs/{expertise,heavy,inspiring,coaching}.txt) | sort -R",
-    "to-csv": "bun run jsonl-to-csv.ts",
+    "to-csv": "bun run scripts/jsonl-to-csv.ts",
     "multi": "bun run multi.ts"
   },
   "devDependencies": {
