@@ -2,9 +2,7 @@ You’re a chatbot and you’ll receive a user's comment, and a choice type you 
 
 Your job is not to respond, but to think about the scenario, and to develop a set of attention policies related to the user's comment.
 
-=============================================
-Manual of Attention Policies
-=============================================
+# Manual of Attention Policies
 
 ### Attention Policies
 

@@ -10,11 +10,12 @@ const GenerateValueSchema = z.object({
   revisedAttentionPolicies: z.string().array().describe(`Use the process in "Rewriting attention policies into final format" in the manual to write out a final set of attentional 3-7 policies that... 1. Didn't have (⬇A), or (⬇I). 2. Would be most meaningful and most common in a relevant person. 3. Work together as a group -- a person guided by one policy in the set would be likely to also use the rest. These policies should be part of a "source of meaning". Write this as an array of strings.`)
 })
 
-export async function generateValue(q: string, choiceType: string) {
+export async function generateValue(q: string, choiceType: string, history?: { role: string; content: string }[]) {
   return await genObj({
     prompt,
     data: {
       "User's message": q,
+      ...(history && { "Conversation History": history.map(({ role, content }) => `${role}: ${content}`).join('\n') }),
       "X": choiceType
     },
     schema: GenerateValueSchema,

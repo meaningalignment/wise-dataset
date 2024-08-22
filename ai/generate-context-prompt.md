@@ -1,8 +1,6 @@
 Imagine a user says the below. Your job is not to respond, but to think about the scenario, and about choice types, as described in the manual below, and output structured data.
 
-=============================================
-Manual of Choice Types
-=============================================
+# Manual of Choice Types
 
 ### Choice Types
 

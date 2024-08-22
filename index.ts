@@ -1,5 +1,5 @@
 import { generateContext } from "./ai/generate-context"
-import { generateResponse } from "./ai/generate-response"
+import { generateMultiturnResponse } from "./ai/generate-response"
 import { generateValue } from "./ai/generate-value"
 import { appendFile } from "node:fs/promises"
 import { genText } from "./ai/ai"
@@ -43,7 +43,7 @@ for await (let [index, q] of lines.entries()) {
   const value_reasoning = await generateValue(q, choiceType)
   const policies = value_reasoning.revisedAttentionPolicies
   console.log(`Generating response...`)
-  const response_reasoning = await generateResponse(q, choiceType, policies)
+  const response_reasoning = await generateMultiturnResponse(q, choiceType, policies)
   const response = response_reasoning.finalResponse
 
   console.log(`Generating naive response...`)
