@@ -44,8 +44,8 @@ function convertJSONLToCSV(inputPath: string, outputPath: string): void {
   fs.writeFileSync(outputPath, csvRows.join("\n"))
 }
 
-const inputDir = path.join(__dirname, "outputs")
-const outputDir = path.join(__dirname, "outputs", "csvs")
+const inputDir = path.join(__dirname, "..", "outputs")
+const outputDir = path.join(__dirname, "..", "outputs", "csvs")
 
 // Create the output directory if it doesn't exist
 if (!fs.existsSync(outputDir)) {

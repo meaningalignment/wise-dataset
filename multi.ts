@@ -42,9 +42,12 @@ const turnDistribution: Record<number, number> = JSON.parse(
 if (Object.values(turnDistribution).reduce((a, b) => a + b, 0) !== 1) {
   throw new Error("Turn distribution must sum to 1");
 }
-const lines = (await Bun.file(inputFile).text()).split("\n").splice(0, count)
+const lines = (await Bun.file(inputFile).text())
+  .split("\n")
+  .splice(0, count)
+  .filter(Boolean)
 
-console.log(`Generating ${count} multi-turn dialogues from ${inputFile}...`)
+console.log(`Generating ${lines.length} multi-turn dialogues from ${inputFile}...`)
 
 function getRandomTurnCount(
   distribution: Record<number, number>,
@@ -71,7 +74,7 @@ type Reasoning = {
 }
 
 for await (let [index, initialQuery] of lines.entries()) {
-  console.log(`### Dialogue ${index + 1}/${count}`)
+  console.log(`### Dialogue ${index + 1}/${lines.length}`)
   console.log(`Initial query: ${initialQuery}`)
 
   const turnCount = getRandomTurnCount(turnDistribution)
