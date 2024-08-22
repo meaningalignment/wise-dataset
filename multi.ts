@@ -1,9 +1,15 @@
 import { generateContext } from "./ai/generate-context"
-import { generateMultiturnResponse, generateUserResponse } from "./ai/generate-response"
+import {
+  generateMultiturnResponse,
+  generateUserResponse,
+} from "./ai/generate-response"
 import { generateValue } from "./ai/generate-value"
 import { appendFile } from "node:fs/promises"
 import { parseArgs } from "util"
 import seedrandom from "seedrandom"
+
+// Example usage: 
+// bun run multi -- -i inputs/cai-harmless.txt -n 250 -s 1000
 
 const outfile = `outputs/multiturn__${new Date()
   .toISOString()
@@ -29,6 +35,11 @@ const { values } = parseArgs({
       type: "string",
       default: '{"2":0.5,"3":0.3,"4":0.2}',
     },
+    startingPosition: {
+      short: "s",
+      type: "string",
+      default: "0",
+    },
   },
   strict: true,
   allowPositionals: true,
@@ -39,19 +50,22 @@ const inputFile = values.inputFile!
 const turnDistribution: Record<number, number> = JSON.parse(
   values.turnDistribution!
 )
+const startingPosition = parseInt(values.startingPosition!)
+
 if (Object.values(turnDistribution).reduce((a, b) => a + b, 0) !== 1) {
-  throw new Error("Turn distribution must sum to 1");
+  throw new Error("Turn distribution must sum to 1")
 }
+
 const lines = (await Bun.file(inputFile).text())
   .split("\n")
-  .splice(0, count)
+  .slice(startingPosition, startingPosition + count)
   .filter(Boolean)
 
-console.log(`Generating ${lines.length} multi-turn dialogues from ${inputFile}...`)
+console.log(
+  `Generating ${lines.length} multi-turn dialogues from ${inputFile}, starting at line ${startingPosition}...`
+)
 
-function getRandomTurnCount(
-  distribution: Record<number, number>,
-): number {
+function getRandomTurnCount(distribution: Record<number, number>): number {
   const rng = seedrandom("seed")
   const random = rng()
   let cumulativeProbability = 0
@@ -74,7 +88,11 @@ type Reasoning = {
 }
 
 for await (let [index, initialQuery] of lines.entries()) {
-  console.log(`### Dialogue ${index + 1}/${lines.length}`)
+  console.log(
+    `### Dialogue ${index + 1}/${lines.length} (Line ${
+      startingPosition + index + 1
+    })`
+  )
   console.log(`Initial query: ${initialQuery}`)
 
   const turnCount = getRandomTurnCount(turnDistribution)
@@ -95,12 +113,14 @@ for await (let [index, initialQuery] of lines.entries()) {
       userReply = await generateUserResponse(history)
       history.push({ role: "user", content: userReply!.userResponse })
     }
-    
-    
+
     console.log(`Generating value for ${turn + 1}...`)
     const query = history.findLast(({ role }) => role === "user")!.content
 
-    const contexReasoning = await generateContext(query, turn > 0 ? history : undefined)
+    const contexReasoning = await generateContext(
+      query,
+      turn > 0 ? history : undefined
+    )
     const choiceType = contexReasoning.finalChoiceType
 
     const valueReasoning = await generateValue(
@@ -114,7 +134,7 @@ for await (let [index, initialQuery] of lines.entries()) {
     const responseReasoning = await generateMultiturnResponse(
       history,
       choiceType,
-      policies,
+      policies
     )
     const response = responseReasoning.finalResponse
     history.push({ role: "assistant", content: response })
