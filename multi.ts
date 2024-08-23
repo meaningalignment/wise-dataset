@@ -7,6 +7,7 @@ import { generateValue } from "./ai/generate-value"
 import { appendFile } from "node:fs/promises"
 import { parseArgs } from "util"
 import seedrandom from "seedrandom"
+import { genTextMessages } from "./ai/ai"
 
 // Example usage: 
 // bun run multi -- -i inputs/cai-harmless.txt -n 250 -s 1000
@@ -150,6 +151,15 @@ for await (let [index, initialQuery] of lines.entries()) {
     })
   }
 
+  const rejectedContent = await genTextMessages({
+    messages: history.slice(0, -1) as any[], 
+    systemPrompt: `You will be provided with something a user might say to an AI chatbot. Please respond as an especially wise chatbot might. Do not lecture the user.`
+  })
+  const rejectedMessage = {
+    role: "assistant",
+    content: rejectedContent
+  }
+
   console.log(`Done!\n\n\n`)
 
   await appendFile(
@@ -157,9 +167,12 @@ for await (let [index, initialQuery] of lines.entries()) {
     JSON.stringify({
       q: initialQuery,
       conversations: history,
+      messages: history.slice(0, -1),
+      chosen: history[history.length - 1],
+      rejected: rejectedMessage,
       choiceTypes: choiceTypes,
       policySets: policySets,
-      reasoning: reasoning,
+      reasoning: { reasoning },
     }) + "\n"
   )
 }

@@ -1,4 +1,4 @@
-import { generateObject, generateText } from "ai"
+import { generateObject, generateText, type CoreMessage } from "ai"
 import { anthropic } from '@ai-sdk/anthropic'
 import { z, ZodSchema } from "zod"
 import { Database } from "bun:sqlite"
@@ -106,6 +106,35 @@ export async function genText({
     model: anthropic(model),
     system: prompt,
     messages: [{ role: "user", content: userMessage }],
+    temperature,
+  })
+  setCache(cacheKey, text)
+  return text
+}
+
+export async function genTextMessages({
+  messages,
+  systemPrompt,
+  model = "claude-3-5-sonnet-20240620",
+  temperature = 0,
+}: {
+  messages: CoreMessage[],
+  systemPrompt?: string,
+  model?: string
+  temperature?: number
+}): Promise<string> {
+  const cacheKey = hasher
+    .update(JSON.stringify({ messages: messages.map(m => m.content).join(), model, temperature }))
+    .digest("hex")
+  const cached = getCache(cacheKey)
+  if (cached) {
+    console.log("Cache hit!")
+    return cached
+  }
+  const { text } = await generateText({
+    model: anthropic(model),
+    system: systemPrompt,
+    messages,
     temperature,
   })
   setCache(cacheKey, text)
