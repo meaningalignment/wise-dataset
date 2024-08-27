@@ -3,8 +3,8 @@ import { generateValue } from "./ai/generate-value"
 import { appendFile } from "node:fs/promises"
 import { genText } from "./ai/ai"
 import { parseArgs } from "util"
-import { $ } from "bun"
 import { generateResponse } from "./ai/generate-response"
+import { intersperseConsiderations } from "./ai/intersperse-considerations"
 
 // USAGE
 // bun index.ts -i inputs/bangers-and-duds.txt -l bangers-and-duds -n 50
@@ -35,13 +35,13 @@ for await (let [index, q] of lines.entries()) {
   console.log(`### Response ${index + 1}/${lines.length}`)
   console.log(`-> ${q}`)
   const context_reasoning = await generateContext(q)
-  const choiceType = context_reasoning.finalChoiceType
-  console.log(`Choice type: ${choiceType}`)
+  const choice_type = context_reasoning.finalChoiceType
+  console.log(`Choice type: ${choice_type}`)
   console.log(`Generating value...`)
-  const value_reasoning = await generateValue(q, choiceType)
+  const value_reasoning = await generateValue(q, choice_type)
   const policies = value_reasoning.revisedAttentionPolicies
   console.log(`Generating response...`)
-  const response_reasoning = await generateResponse(q, choiceType, policies)
+  const response_reasoning = await generateResponse(q, choice_type, policies)
   const response = response_reasoning.finalResponse
 
   console.log(`Generating naive response...`)
@@ -50,13 +50,21 @@ for await (let [index, q] of lines.entries()) {
     userMessage: q
   })
 
-  console.log(`Done!\n\n\n`)
-  await appendFile(outfile, JSON.stringify({
-    q, choiceType, policies, response, naive_response, reasoning: { context_reasoning, value_reasoning, response_reasoning }
-  }) + '\n')
-}
+  console.log(`Interspersing considerations into response...`)
+  const response_with_considerations = (await intersperseConsiderations(q, response, choice_type, policies)).response
 
-const csvFile = outfile.replace(/\.jsonl$/, ".csv")
-const csv = await $`dasel -r json -w csv 'all().mapOf(q,q,choiceType,choiceType,policies,policies,response,response,naive_response,naive_response).merge()' < ${outfile}`.text()
-Bun.write(csvFile, csv)
-console.log(`Wrote ${csvFile}`)
+  console.log(`Done!\n\n\n`)
+
+  await appendFile(
+    outfile,
+    JSON.stringify({
+      q,
+      choice_type,
+      policies,
+      response,
+      naive_response,
+      response_with_considerations,
+      reasoning: { context_reasoning, value_reasoning, response_reasoning },
+    }) + "\n"
+  )
+}
