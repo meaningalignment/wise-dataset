@@ -198,7 +198,7 @@ for await (let [index, initialQuery] of lines.entries()) {
   await appendFile(
     outfile,
     JSON.stringify({
-      q: initialQuery,
+      prompt: initialQuery,
       chosen: historyInterspersed[historyInterspersed.length - 1],
       rejected: rejectedMessage,
       conversations: historyInterspersed,

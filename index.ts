@@ -58,13 +58,39 @@ for await (let [index, q] of lines.entries()) {
   await appendFile(
     outfile,
     JSON.stringify({
-      q,
+      // Data formatted for training a model.
+      prompt: q,
+      conversations: [
+        {
+          role: "user",
+          content: q,
+        },
+        {
+          role: "assistant",
+          content: response_with_considerations,
+        },
+      ],
+      messages: [
+        {
+          role: "user",
+          content: q,
+        },
+      ],
+      chosen: {
+        role: "assistant",
+        content: response_with_considerations,
+      },
+      rejected: {
+        role: "assistant",
+        content: naive_response,
+      },
+      // Data formatted as-is, for inspecting the result.
+      reasoning: { context_reasoning, value_reasoning, response_reasoning },
+      response,
+      response_with_considerations,
       choice_type,
       policies,
-      response,
       naive_response,
-      response_with_considerations,
-      reasoning: { context_reasoning, value_reasoning, response_reasoning },
     }) + "\n"
   )
 }
