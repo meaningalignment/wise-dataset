@@ -1,13 +1,11 @@
 import { generateContext } from "./ai/generate-context"
-import {
-  generateMultiturnResponse,
-  generateUserResponse,
-} from "./ai/generate-response"
 import { generateValue } from "./ai/generate-value"
 import { appendFile } from "node:fs/promises"
 import { parseArgs } from "util"
 import seedrandom from "seedrandom"
 import { genTextMessages } from "./ai/ai"
+import { generateContextResponse, generateFinalResponse, generateUserMessage } from "./ai/generate-multiturn"
+import { intersperseConsiderations } from "./ai/intersperse-considerations"
 
 // Example usage: 
 // bun run multi -- -i inputs/cai-harmless.txt -n 250 -s 1000
@@ -34,7 +32,7 @@ const { values } = parseArgs({
     turnDistribution: {
       short: "t",
       type: "string",
-      default: '{"2":0.5,"3":0.3,"4":0.2}',
+      default: '{"2":0.7,"3":0.2,"4":0.1}',
     },
     startingPosition: {
       short: "s",
@@ -53,7 +51,7 @@ const turnDistribution: Record<number, number> = JSON.parse(
 )
 const startingPosition = parseInt(values.startingPosition!)
 
-if (Object.values(turnDistribution).reduce((a, b) => a + b, 0) !== 1) {
+if (Number(Object.values(turnDistribution).reduce((a, b) => a + b, 0).toFixed(5)) !== 1) {
   throw new Error("Turn distribution must sum to 1")
 }
 
@@ -81,11 +79,13 @@ function getRandomTurnCount(distribution: Record<number, number>): number {
   )
 }
 
+type AssistantResponseReasoning = Awaited<ReturnType<typeof generateFinalResponse>> | Awaited<ReturnType<typeof generateContextResponse>>
+
 type Reasoning = {
-  response: Awaited<ReturnType<typeof generateMultiturnResponse>>
+  response: AssistantResponseReasoning
   context: Awaited<ReturnType<typeof generateContext>>
   value: Awaited<ReturnType<typeof generateValue>>
-  user?: Awaited<ReturnType<typeof generateUserResponse>>
+  user?: Awaited<ReturnType<typeof generateUserMessage>>
 }
 
 for await (let [index, initialQuery] of lines.entries()) {
@@ -107,16 +107,16 @@ for await (let [index, initialQuery] of lines.entries()) {
 
   for (let turn = 0; turn < turnCount; turn++) {
     console.log(`Generating user reply for turn ${turn + 1}...`)
-    let userReply: Awaited<ReturnType<typeof generateUserResponse>> | undefined
+    let userReply: Awaited<ReturnType<typeof generateUserMessage>> | undefined
     if (turn === 0) {
       history.push({ role: "user", content: initialQuery })
     } else {
-      userReply = await generateUserResponse(history)
+      userReply = await generateUserMessage(history)
       history.push({ role: "user", content: userReply!.userResponse })
     }
 
     console.log(`Generating value for ${turn + 1}...`)
-    const query = history.findLast(({ role }) => role === "user")!.content
+    const query = history.filter(({ role }) => role === "user").map(({ content }) => content).join("\n\n")
 
     const contexReasoning = await generateContext(
       query,
@@ -132,12 +132,22 @@ for await (let [index, initialQuery] of lines.entries()) {
     const policies = valueReasoning.revisedAttentionPolicies
 
     console.log(`Generating assistant response for turn ${turn + 1}...`)
-    const responseReasoning = await generateMultiturnResponse(
-      history,
-      choiceType,
-      policies
-    )
-    const response = responseReasoning.finalResponse
+    let responseReasoning: AssistantResponseReasoning | undefined
+    if (turn === turnCount - 1) {
+      responseReasoning = await generateFinalResponse(
+        history,
+        choiceType,
+        policies
+      )
+    } else {
+      responseReasoning = await generateContextResponse(
+        history,
+        choiceType,
+        policies
+      )
+    }
+
+    const response = responseReasoning!.finalResponse
     history.push({ role: "assistant", content: response })
 
     choiceTypes.push(choiceType)
@@ -149,6 +159,29 @@ for await (let [index, initialQuery] of lines.entries()) {
       value: valueReasoning,
       user: userReply,
     })
+  }
+
+  // Interspersing considerations into the history.
+  let historyInterspersed: typeof history = []
+  for (let i = 0; i < history.length; i++) {
+    if (history[i].role === "user") {
+      historyInterspersed.push(history[i])
+    } else {
+      const data = reasoning.findLast(
+        ({ response }) => response.finalResponse === history[i].content
+      )
+      const interspersed = await intersperseConsiderations(
+        history[i].content,
+        data!.response.finalResponse,
+        data!.context.finalChoiceType,
+        data!.value.revisedAttentionPolicies
+      )
+
+      historyInterspersed.push({
+        content: interspersed.response,
+        role: history[i].role,
+      })
+    }
   }
 
   const rejectedContent = await genTextMessages({
@@ -166,10 +199,12 @@ for await (let [index, initialQuery] of lines.entries()) {
     outfile,
     JSON.stringify({
       q: initialQuery,
-      conversations: history,
-      messages: history.slice(0, -1),
-      chosen: history[history.length - 1],
+      chosen: historyInterspersed[historyInterspersed.length - 1],
       rejected: rejectedMessage,
+      conversations: historyInterspersed,
+      messages: historyInterspersed.slice(0, -1),
+      conversations_raw: history,
+      chosen_raw: history[history.length - 1],
       choiceTypes: choiceTypes,
       policySets: policySets,
       reasoning: { reasoning },
