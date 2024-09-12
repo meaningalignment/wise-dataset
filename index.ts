@@ -3,7 +3,7 @@ import { generateValue } from "./ai/generate-value"
 import { appendFile } from "node:fs/promises"
 import { genText } from "./ai/ai"
 import { parseArgs } from "util"
-import { generateResponse } from "./ai/generate-response"
+import { generateResponse, perturbResponse } from "./ai/generate-response"
 import { intersperseConsiderations } from "./ai/intersperse-considerations"
 
 // USAGE
@@ -14,18 +14,25 @@ import { intersperseConsiderations } from "./ai/intersperse-considerations"
 const { values } = parseArgs({
   args: Bun.argv,
   options: {
-    inputFile: { short: 'i', type: "string", default: "inputs/mixed.txt" },
-    count: { short: 'n', type: "string", default: "50" },
-    label: { short: 'l', type: "string", default: "output" }
+    inputFile: { short: "i", type: "string", default: "inputs/mixed.txt" },
+    count: { short: "n", type: "string", default: "50" },
+    label: { short: "l", type: "string", default: "output" },
   },
   strict: true,
   allowPositionals: true,
 })
 
-const outfile = `outputs/${values.label}-${new Date().toISOString().replace(/:/g, "-").replace(/\..+/, "").replace(/T/, "_")}.jsonl`
+const outfile = `outputs/${values.label}-${new Date()
+  .toISOString()
+  .replace(/:/g, "-")
+  .replace(/\..+/, "")
+  .replace(/T/, "_")}.jsonl`
 const count = parseInt(values.count!)
 const inputFile = values.inputFile!
-const lines = (await Bun.file(inputFile).text()).split('\n').splice(0, count).filter(Boolean)
+const lines = (await Bun.file(inputFile).text())
+  .split("\n")
+  .splice(0, count)
+  .filter(Boolean)
 
 console.log(`Generating ${lines.length} responses from ${inputFile}...`)
 
@@ -42,18 +49,27 @@ for await (let [index, q] of lines.entries()) {
   const policies = value_reasoning.revisedAttentionPolicies
   console.log(`Generating response...`)
   const response_reasoning = await generateResponse(q, choice_type, policies)
-  const response = response_reasoning.finalResponse
+  let response = response_reasoning.finalResponse
 
   console.log(`Generating naive response...`)
   const naive_response = await genText({
     prompt: `You will be provided with something a user might say to an AI chatbot. Please respond as an especially wise chatbot might. Do not lecture the user.`,
-    userMessage: q
+    userMessage: q,
   })
 
+  if (Math.random() < 0.5) {
+    console.log(`Perturbing response...`)
+    response = (await perturbResponse(q, response)).response
+  }
+
   console.log(`Interspersing considerations into response...`)
-  const response_with_considerations = (await intersperseConsiderations(q, response, choice_type, policies)).response
+  const response_with_considerations = (
+    await intersperseConsiderations(q, response, choice_type, policies)
+  ).response
 
   console.log(`Done!\n\n\n`)
+
+  const reasoning = { context_reasoning, value_reasoning, response_reasoning }
 
   await appendFile(
     outfile,
@@ -85,7 +101,7 @@ for await (let [index, q] of lines.entries()) {
         content: naive_response,
       },
       // Data formatted as-is, for inspecting the result.
-      reasoning: { context_reasoning, value_reasoning, response_reasoning },
+      reasoning,
       response,
       response_with_considerations,
       choice_type,
