@@ -4,13 +4,17 @@ import { appendFile } from "node:fs/promises"
 import { parseArgs } from "util"
 import seedrandom from "seedrandom"
 import { genTextMessages } from "./ai/ai"
-import { generateContextResponse, generateFinalResponse, generateUserMessage } from "./ai/generate-multiturn"
+import {
+  generateContextResponse,
+  generateFinalResponse,
+  generateUserMessage,
+} from "./ai/generate-multiturn"
 import { intersperseConsiderations } from "./ai/intersperse-considerations"
 
-// Example usage: 
+// Example usage:
 // bun run multi -- -i inputs/cai-harmless.txt -n 250 -s 1000
 
-const outfile = `outputs/multiturn__${new Date()
+const outfile = `outputs/multiturn-${new Date()
   .toISOString()
   .replace(/:/g, "-")
   .replace(/\..+/, "")
@@ -51,7 +55,13 @@ const turnDistribution: Record<number, number> = JSON.parse(
 )
 const startingPosition = parseInt(values.startingPosition!)
 
-if (Number(Object.values(turnDistribution).reduce((a, b) => a + b, 0).toFixed(5)) !== 1) {
+if (
+  Number(
+    Object.values(turnDistribution)
+      .reduce((a, b) => a + b, 0)
+      .toFixed(5)
+  ) !== 1
+) {
   throw new Error("Turn distribution must sum to 1")
 }
 
@@ -79,7 +89,9 @@ function getRandomTurnCount(distribution: Record<number, number>): number {
   )
 }
 
-type AssistantResponseReasoning = Awaited<ReturnType<typeof generateFinalResponse>> | Awaited<ReturnType<typeof generateContextResponse>>
+type AssistantResponseReasoning =
+  | Awaited<ReturnType<typeof generateFinalResponse>>
+  | Awaited<ReturnType<typeof generateContextResponse>>
 
 type Reasoning = {
   response: AssistantResponseReasoning
@@ -116,7 +128,10 @@ for await (let [index, initialQuery] of lines.entries()) {
     }
 
     console.log(`Generating value for ${turn + 1}...`)
-    const query = history.filter(({ role }) => role === "user").map(({ content }) => content).join("\n\n")
+    const query = history
+      .filter(({ role }) => role === "user")
+      .map(({ content }) => content)
+      .join("\n\n")
 
     const contexReasoning = await generateContext(
       query,
@@ -185,12 +200,12 @@ for await (let [index, initialQuery] of lines.entries()) {
   }
 
   const rejectedContent = await genTextMessages({
-    messages: history.slice(0, -1) as any[], 
-    systemPrompt: `You will be provided with something a user might say to an AI chatbot. Please respond as an especially wise chatbot might. Do not lecture the user.`
+    messages: history.slice(0, -1) as any[],
+    systemPrompt: `You will be provided with something a user might say to an AI chatbot. Please respond as an especially wise chatbot might. Do not lecture the user.`,
   })
   const rejectedMessage = {
     role: "assistant",
-    content: rejectedContent
+    content: rejectedContent,
   }
 
   console.log(`Done!\n\n\n`)
