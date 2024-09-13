@@ -10,8 +10,6 @@ const dedupePoliciesPrompt = await Bun.file(
 export async function genDeduplicateChoiceTypes(
   terms: string[]
 ): Promise<string[][]> {
-  console.log(terms)
-  console.log(dedupeChoiceTypesPrompt)
   const result = await genObj({
     prompt: dedupeChoiceTypesPrompt,
     data: { terms },
@@ -31,28 +29,33 @@ export async function genDeduplicatePolicies(
   choiceType: string,
   listOfPolicies: string[][]
 ): Promise<number[][]> {
-  const result = await genObj({
-    prompt: dedupePoliciesPrompt,
-    data: {
-      choiceType,
-      listOfPolicies,
-    },
-    schema: z.object({
-      policyClusters: z
-        .array(
-          z.array(
-            z
-              .number()
-              .int()
-              .min(0)
-              .max(listOfPolicies.length - 1)
+  try {
+    const result = await genObj({
+      prompt: dedupePoliciesPrompt,
+      data: {
+        choiceType,
+        listOfPolicies,
+      },
+      schema: z.object({
+        policyClusters: z
+          .array(
+            z.array(
+              z
+                .number()
+                .int()
+                .min(0)
+                .max(listOfPolicies.length - 1)
+            )
           )
-        )
-        .describe(
-          "A list of policy clusters, where each cluster is a list of indices referring to similar policies in the original listOfPolicies that all describe a shared source of meaning."
-        ),
-    }),
-  })
+          .describe(
+            "A list of policy clusters, where each cluster is a list of indices referring to similar policies in the original listOfPolicies that all describe a shared source of meaning."
+          ),
+      }),
+    })
 
-  return result.policyClusters
+    return result.policyClusters
+  } catch (error) {
+    console.error("Error in genDeduplicatePolicies:", error)
+    return [listOfPolicies.map((_, index) => index)]
+  }
 }

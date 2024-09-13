@@ -4,10 +4,10 @@ import { z } from "zod"
 import {
   genDeduplicateChoiceTypes,
   genDeduplicatePolicies,
-} from "./ai/deduplicate"
+} from "./ai/generate-deduplication"
 import { parseArgs } from "util"
-import { embed } from "./ai/embed"
 import { DBSCAN } from "density-clustering"
+import { embed } from "./ai/ai"
 
 function cosineDistance(vecA: number[], vecB: number[]) {
   let dotProduct = 0.0
@@ -158,10 +158,7 @@ async function deduplicateValues(
     if (relevantItems.length === 1) {
       // If there's only one relevant item, push it directly
       deduplicatedPolicies.push([policiesForChoiceType[0]])
-      console.log(
-        `Single policy for choice type ${representative}:`,
-        policiesForChoiceType[0]
-      )
+      console.log("Single value for choice type, not running prompt!")
     } else {
       // If there are multiple items, proceed with deduplication
       const policyClusterIndices = await genDeduplicatePolicies(
@@ -239,7 +236,7 @@ async function deduplicateValues(
 }
 
 // Run the deduplication with output file name
-const outputFileName = `outputs/deduplication_${new Date()
+const outputFileName = `outputs/deduplication-${new Date()
   .toISOString()
   .replace(/:/g, "-")
   .replace(/\..+/, "")}.jsonl`

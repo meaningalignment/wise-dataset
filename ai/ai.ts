@@ -3,15 +3,14 @@ import { anthropic } from "@ai-sdk/anthropic"
 import { z, ZodSchema } from "zod"
 import { Database } from "bun:sqlite"
 import { zodToJsonSchema } from "zod-to-json-schema"
+import OpenAI from "openai"
 
 const db = new Database("cache.sqlite", { create: true })
 const hasher = new Bun.CryptoHasher("md5")
+const openai = new OpenAI()
 
 db.query(
   "CREATE TABLE IF NOT EXISTS cache (key TEXT PRIMARY KEY, value TEXT)"
-).run()
-db.query(
-  "CREATE TABLE IF NOT EXISTS embedding_cache (key TEXT PRIMARY KEY, value TEXT)"
 ).run()
 
 function retryOnLock<T>(operation: () => T, maxRetries: number = 3): T {
@@ -45,26 +44,6 @@ export function getCache(key: string) {
   return retryOnLock(() => {
     const row = db
       .query("SELECT * FROM cache WHERE key = $key")
-      .get({ $key: key }) as { key: string; value: string } | undefined
-    return row ? JSON.parse(row.value) : undefined
-  })
-}
-
-export function setEmbeddingCache(key: string, value: any) {
-  retryOnLock(() => {
-    db.query(
-      "INSERT OR REPLACE INTO embedding_cache (key, value) VALUES ($key, $value)"
-    ).run({
-      $key: key,
-      $value: JSON.stringify(value),
-    })
-  })
-}
-
-export function getEmbeddingCache(key: string): number[] | undefined {
-  return retryOnLock(() => {
-    const row = db
-      .query("SELECT * FROM embedding_cache WHERE key = $key")
       .get({ $key: key }) as { key: string; value: string } | undefined
     return row ? JSON.parse(row.value) : undefined
   })
@@ -219,4 +198,15 @@ export async function genTextMessages({
   })
   setCache(cacheKey, text)
   return text
+}
+
+export async function embed(values: string[]): Promise<number[][]> {
+  console.log("Embedding", values.length, "values")
+  const response = await openai.embeddings.create({
+    model: "text-embedding-3-large",
+    dimensions: 1536,
+    input: values,
+  })
+
+  return response.data.map((item) => item.embedding)
 }
