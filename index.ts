@@ -17,6 +17,7 @@ const { values } = parseArgs({
     inputFile: { short: "i", type: "string", default: "inputs/mixed.txt" },
     count: { short: "n", type: "string", default: "50" },
     label: { short: "l", type: "string", default: "output" },
+    perturbLikelihood: { short: "p", type: "string", default: "0.0" },
   },
   strict: true,
   allowPositionals: true,
@@ -28,6 +29,7 @@ const outfile = `outputs/${values.label}-${new Date()
   .replace(/\..+/, "")
   .replace(/T/, "_")}.jsonl`
 const count = parseInt(values.count!)
+const perturbLikelihood = parseFloat(values.perturbLikelihood!)
 const inputFile = values.inputFile!
 const lines = (await Bun.file(inputFile).text())
   .split("\n")
@@ -57,7 +59,7 @@ for await (let [index, q] of lines.entries()) {
     userMessage: q,
   })
 
-  if (Math.random() < 0.5) {
+  if (Math.random() < perturbLikelihood) {
     console.log(`Perturbing response...`)
     response = (await perturbResponse(q, response)).response
   }

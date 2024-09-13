@@ -1,8 +1,11 @@
-import { z } from "zod";
-import { genObj } from "./ai";
-const prompt = await Bun.file("ai/generate-context-prompt.md").text()
+import { z } from "zod"
+import { genObj } from "./ai"
+const prompt = await Bun.file("ai/prompts/generate-context-prompt.md").text()
 
-export async function generateContext(q: string, history?: { role: string; content: string }[]) {
+export async function generateContext(
+  q: string,
+  history?: { role: string; content: string }[]
+) {
   return await genObj({
     prompt,
     data: {

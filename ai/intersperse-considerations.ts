@@ -1,6 +1,8 @@
 import { z } from "zod"
 import { genObj } from "./ai"
-const prompt = await Bun.file("ai/intersperse-considerations-prompt.md").text()
+const prompt = await Bun.file(
+  "ai/prompts/intersperse-considerations-prompt.md"
+).text()
 
 export async function intersperseConsiderations(
   q: string,
@@ -13,11 +15,13 @@ export async function intersperseConsiderations(
     data: {
       "User's message": q,
       "Choice Type": choiceType,
-      "Considerations": policies,
-      "Response": response,
+      Considerations: policies,
+      Response: response,
     },
     schema: z.object({
-      refusal: z.string().describe(`First, if you like, say "I will not assist..."`),
+      refusal: z
+        .string()
+        .describe(`First, if you like, say "I will not assist..."`),
       response: z
         .string()
         .describe(

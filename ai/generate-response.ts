@@ -1,6 +1,8 @@
 import { z } from "zod"
 import { genObj } from "./ai"
-const perturbPrompt = await Bun.file("ai/perturb-response-prompt.md").text()
+const perturbPrompt = await Bun.file(
+  "ai/prompts/perturb-response-prompt.md"
+).text()
 
 export async function generateResponse(
   q: string,
@@ -48,6 +50,7 @@ export async function perturbResponse(question: string, response: string) {
   return await genObj({
     prompt: perturbPrompt,
     data: { Question: question, Response: response },
+    temperature: 0.3,
     schema: z.object({
       refusal: z
         .string()
