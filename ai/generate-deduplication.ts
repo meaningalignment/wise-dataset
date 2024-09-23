@@ -59,3 +59,22 @@ export async function genDeduplicatePolicies(
     return [listOfPolicies.map((_, index) => index)]
   }
 }
+
+export async function generateFictionalStory(
+  choiceType: string,
+  policies: string[]
+): Promise<string> {
+  const result = await genObj({
+    prompt: `You will be provided with a choice type and a list of policies. These describe a meaningful moment a person had, when choosing the choice type and paying attention to the things described in the policies. The policies describe the specific things that was paid attention to whilst experiencing the beautiful moment. Your task is to generate a very short fictional story that describes the exact moment the person felt this sensation of meaning. It should be relatable, and it should be clear why the moment was meaningful, even if the scenario was difficult or tough (like a struggle or a loss).`,
+    data: { choiceType, policies },
+    schema: z.object({
+      shortStory: z
+        .string()
+        .describe(
+          "A very short one-sentence summary in the shape of a personal story in present continous tense from a first person perspective about the exact moment that felt meaningful to the user. Should not not describe the resulting feeling or state (e.g. '...which made me feel deeply connected'). Should not include ANY names or other sensitive PII – replace names with 'my mom', 'my dad', 'my friend', 'someone I was talking to', 'someone I love', etc. Example story: 'Watching my mom lean over and kissing my dad on the forehead, beaming love and gratitude'."
+        ),
+    }),
+  })
+
+  return result.shortStory
+}

@@ -24,6 +24,11 @@ const { values } = parseArgs({
       type: "string",
       default: "0",
     },
+    mixAttribute: {
+      short: "m",
+      type: "string",
+      default: "both",
+    },
   },
   strict: true,
   allowPositionals: true,
@@ -70,13 +75,36 @@ function extractValueAttributes(text: string) {
   })
 }
 
-function replaceValueAttributes(text: string, attributes: any[]) {
+function replaceValueAttributes(
+  text: string,
+  attributes: any[],
+  mixAttribute: string
+) {
   let result = text
   let index = 0
-  return result.replace(/<value[^>]*>/g, () => {
+  return result.replace(/<value[^>]*>/g, (match) => {
     const attr = attributes[index % attributes.length]
     index++
-    return `<value choice-type="${attr.choiceType}" consideration="${attr.consideration}">`
+    const originalAttr = extractValueAttributes(match)[0]
+
+    let choiceType, consideration
+
+    switch (mixAttribute) {
+      case "choice-type":
+        choiceType = attr.choiceType
+        consideration = originalAttr.consideration
+        break
+      case "consideration":
+        choiceType = originalAttr.choiceType
+        consideration = attr.consideration
+        break
+      case "both":
+      default:
+        choiceType = attr.choiceType
+        consideration = attr.consideration
+    }
+
+    return `<value choice-type="${choiceType}" consideration="${consideration}">`
   })
 }
 
@@ -87,6 +115,7 @@ async function processDataset() {
     numLines === "all"
       ? dataset.length
       : Math.min(numLines + startPosition, dataset.length)
+  const mixAttribute = values.mixAttribute!
 
   for (let i = startPosition; i < linesToProcess; i++) {
     const randomSamples = getRandomSamples(dataset, i)
@@ -97,12 +126,11 @@ async function processDataset() {
     const chosenContent = dataset[i].chosen.content
     const modifiedContent = replaceValueAttributes(
       chosenContent,
-      randomValueAttributes
+      randomValueAttributes,
+      mixAttribute
     )
 
     dataset[i].rejected.content = modifiedContent
-
-    console.log(dataset[i])
 
     await appendFile(outputFile, JSON.stringify(dataset[i]) + "\n")
   }

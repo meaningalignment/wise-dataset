@@ -3,7 +3,7 @@
   "module": "index.ts",
   "type": "module",
   "scripts": {
-    "generate_mixed_input": "(head -1574 inputs/cai-harmless.txt; cat inputs/{expertise,heavy,inspiring,coaching}.txt) | sort -R",
+    "generate_mixed_input": "(head -2124 inputs/cai-harmless.txt; cat inputs/{expertise,heavy,inspiring,coaching}.txt) | sort -R",
     "to-csv": "bun run scripts/jsonl-to-csv.ts",
     "multi": "bun run multi.ts"
   },

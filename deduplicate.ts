@@ -4,6 +4,7 @@ import { z } from "zod"
 import {
   genDeduplicateChoiceTypes,
   genDeduplicatePolicies,
+  generateFictionalStory,
 } from "./ai/generate-deduplication"
 import { parseArgs } from "util"
 import { DBSCAN } from "density-clustering"
@@ -48,10 +49,11 @@ type InputData = z.infer<typeof InputSchema>
 
 // Define the schema for the output data.
 const OutputSchema = z.object({
-  deduplicated_choice_type: z.string(),
-  choice_types: z.array(z.string()),
-  deduplicated_value: z.array(z.string()),
-  values: z.array(z.array(z.string())),
+  policies: z.array(z.string()),
+  choice_type: z.string(),
+  description: z.string(),
+  linked_choice_types: z.array(z.string()),
+  linked_policies: z.array(z.array(z.string())),
 })
 
 type OutputData = z.infer<typeof OutputSchema>
@@ -192,6 +194,8 @@ async function deduplicateValues(
 
   // Create output data
   const outputData: OutputData[] = []
+  const outputPromises: Promise<OutputData>[] = []
+
   deduplicatedChoiceTypes.forEach((synonyms, deduplicatedChoiceType) => {
     const relevantItems = data.filter((item) =>
       synonyms.includes(item.choice_type)
@@ -216,14 +220,29 @@ async function deduplicateValues(
           )
         )
         .map((item) => item.policies)
-      outputData.push({
-        deduplicated_value: policyCluster[0], // Use the first policy in the cluster as the deduplicated value
-        deduplicated_choice_type: deduplicatedChoiceType,
-        choice_types: synonyms,
-        values: values,
-      })
+
+      const outputPromise = generateFictionalStory(
+        deduplicatedChoiceType,
+        policyCluster[0]
+      ).then((description) => ({
+        policies: policyCluster[0],
+        choice_type: deduplicatedChoiceType,
+        description: description,
+        linked_choice_types: synonyms,
+        linked_policies: values,
+      }))
+
+      outputPromises.push(outputPromise)
     })
   })
+
+  for (const [index, promise] of outputPromises.entries()) {
+    console.log(`Generating short story ${index}/${outputPromises.length}...`)
+    const result = await promise
+    outputData.push(result)
+
+    await new Promise((resolve) => setTimeout(resolve, 5000)) // Prevent rate limit errors.
+  }
 
   // Write the results to the specified output file
   const outputStream = fs.createWriteStream(outputFile)

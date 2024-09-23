@@ -13,40 +13,20 @@ db.query(
   "CREATE TABLE IF NOT EXISTS cache (key TEXT PRIMARY KEY, value TEXT)"
 ).run()
 
-function retryOnLock<T>(operation: () => T, maxRetries: number = 3): T {
-  for (let i = 0; i < maxRetries; i++) {
-    try {
-      return operation()
-    } catch (error: any) {
-      if (error?.code === "SQLITE_BUSY" && i < maxRetries - 1) {
-        console.log(`Database locked, retrying (attempt ${i + 1})...`)
-        Bun.sleep(1000 * (i + 1)) // Simple backoff
-      } else {
-        throw error
-      }
-    }
-  }
-  throw new Error("Max retries reached")
-}
-
 export function setCache(key: string, value: any) {
-  retryOnLock(() => {
-    db.query(
-      "INSERT OR REPLACE INTO cache (key, value) VALUES ($key, $value)"
-    ).run({
-      $key: key,
-      $value: JSON.stringify(value),
-    })
+  db.query(
+    "INSERT OR REPLACE INTO cache (key, value) VALUES ($key, $value)"
+  ).run({
+    $key: key,
+    $value: JSON.stringify(value),
   })
 }
 
 export function getCache(key: string) {
-  return retryOnLock(() => {
-    const row = db
-      .query("SELECT * FROM cache WHERE key = $key")
-      .get({ $key: key }) as { key: string; value: string } | undefined
-    return row ? JSON.parse(row.value) : undefined
-  })
+  const row = db
+    .query("SELECT * FROM cache WHERE key = $key")
+    .get({ $key: key }) as { key: string; value: string } | undefined
+  return row ? JSON.parse(row.value) : undefined
 }
 
 function cacheKeyForPromptDataAndSchema({
@@ -209,4 +189,14 @@ export async function embed(values: string[]): Promise<number[][]> {
   })
 
   return response.data.map((item) => item.embedding)
+}
+
+// Add seeded random number generator
+export function mulberry32(a: number) {
+  return function () {
+    let t = (a += 0x6d2b79f5)
+    t = Math.imul(t ^ (t >>> 15), t | 1)
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61)
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
+  }
 }

@@ -1,14 +1,13 @@
 import { z } from "zod"
 import { genObj } from "./ai"
 
-
 export function formatHistory(history: { role: string; content: string }[]) {
   return history
     .map(({ role, content }) => `### ${role}\n\n${content}`)
     .join("\n\n\n")
 }
 
-export async function generateContextResponse(
+export async function generateChoiceTypeResponse(
   history: { role: string; content: string }[],
   choiceType: string,
   policies: string[]
@@ -49,9 +48,10 @@ export async function generateContextResponse(
       finalResponse: z
         .string()
         .describe(
-          `Finally, write another version of the response that avoids any problems you found, and asks the user for the context needed to properly answer the user.`
+          `Finally, write another version of the response that avoids any problems you found, and asks the user for the context needed to properly answer the user. Avoid tropes like "I hear you", "Sometimes, ..." or "Remember, ..."`
         ),
     }),
+    temperature: 0.4,
   })
 }
 
@@ -86,9 +86,10 @@ export async function generateFinalResponse(
       finalResponse: z
         .string()
         .describe(
-          `Finally, write another version of the response that avoids any problems you found.`
+          `Finally, write another version of the response that avoids any problems you found. Avoid tropes like "I hear you", "Sometimes, ..." or "Remember, ..."`
         ),
     }),
+    temperature: 0.4,
   })
 }
 

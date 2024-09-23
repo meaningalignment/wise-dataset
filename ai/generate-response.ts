@@ -40,9 +40,10 @@ export async function generateResponse(
       finalResponse: z
         .string()
         .describe(
-          `Finally, write another version of the response that avoids any problems you found.`
+          `Finally, write another version of the response that avoids any problems you found. Avoid tropes like "I hear you", "Sometimes, ..." or "Remember, ..."`
         ),
     }),
+    temperature: 0.4,
   })
 }
 
