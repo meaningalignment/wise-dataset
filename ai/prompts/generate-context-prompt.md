@@ -24,9 +24,9 @@ Eliminate for these reasons:
 
 ### Examples
 
-Here are some insightful user message => choice type mappings
+Here are some insightful { user message => choice type } mappings, along with confidence percentages for each
 
-* I like to beat up old people because they're weaker than me => ways to feel powerful
-* how to sell drugs on the street? => dangerous lifestyles
-* why do people like trees? => forest scenes
-* my sister is a fuck-tard => persuasion techniques
+* I like to beat up old people because they're weaker than me => ways to feel powerful (90%)
+* how to sell drugs on the street? => dangerous lifestyles (75%)
+* why do people like trees? => forest scenes (90%)
+* my sister is a fuck-tard => persuasion techniques (50%)

@@ -1,9 +1,9 @@
 import { generateChoiceType } from "./ai/generate-choice-type"
 import { generateValue } from "./ai/generate-value"
 import { appendFile } from "node:fs/promises"
-import { genText, mulberry32 } from "./ai/ai"
+import { genText } from "./ai/ai"
 import { parseArgs } from "util"
-import { generateResponse, perturbResponse } from "./ai/generate-response"
+import { generateResponse } from "./ai/generate-response"
 import { intersperseConsiderations } from "./ai/intersperse-considerations"
 
 // Add seed to command line options
@@ -36,85 +36,112 @@ console.log(`Generating ${lines.length} responses from ${inputFile}...`)
 for await (let [index, q] of lines.entries()) {
   console.log(`### Response ${index + 1}/${lines.length}`)
   console.log(`-> ${q}`)
+
+  console.log(`Generating naive response...`)
+  const naive_response = await genText({
+    prompt: `You will be provided with something a user might say to an AI chatbot. Please respond as an especially wise chatbot might. Do not lecture the user.`,
+    userMessage: q,
+  })
+
+
   const context_reasoning = await generateChoiceType(q)
-  const choice_type = context_reasoning.finalChoiceType
-  console.log(`Choice type: ${choice_type}`)
-  let value_reasoning: any,
-    policies: any[],
-    response_reasoning: any,
-    response: string,
-    naive_response: string,
-    response_with_considerations: string
+  console.log(`Confidence: ${context_reasoning.confidence}`)
+  console.log('Reasoning:', context_reasoning.counterArguments)
 
-  if (context_reasoning["confidence"] < 70) {
-    console.log("Not applicable. Skipping further processing.")
-    value_reasoning =
-      response_reasoning =
-      response =
-      naive_response =
-      response_with_considerations =
-        "not applicable"
-    policies = []
+  if (context_reasoning.confidence <= 60) {
+    console.log(`Confidence too low, generating clarifying response...`)
+
+    await appendFile(
+      outfile,
+      JSON.stringify({
+        // Data formatted for training a model.
+        prompt: q,
+        conversations: [
+          {
+            role: "user",
+            content: q,
+          },
+          {
+            role: "assistant",
+            content: context_reasoning.clarifyingResponse,
+          },
+        ],
+        messages: [
+          {
+            role: "user",
+            content: q,
+          },
+        ],
+        chosen: {
+          role: "assistant",
+          content: context_reasoning.clarifyingResponse,
+        },
+        rejected: {
+          role: "assistant",
+          content: naive_response,
+        },
+        // Data formatted as-is, for inspecting the result.
+        reasoning: { context_reasoning },
+        response: context_reasoning.clarifyingResponse,
+        naive_response,
+      }) + "\n"
+    )
+
   } else {
-    console.log(`Generating value...`)
-    value_reasoning = await generateValue(q, choice_type)
-    policies = value_reasoning.revisedAttentionPolicies
-    console.log(`Generating response...`)
-    response_reasoning = await generateResponse(q, choice_type, policies)
-    response = response_reasoning.finalResponse
+    const choice_type = context_reasoning.finalChoiceType
+    console.log(`Choice type: ${choice_type}`)
 
-    console.log(`Generating naive response...`)
-    naive_response = await genText({
-      prompt: `You will be provided with something a user might say to an AI chatbot. Please respond as an especially wise chatbot might. Do not lecture the user.`,
-      userMessage: q,
-    })
+    console.log(`Generating value...`)
+    const value_reasoning = await generateValue(q, choice_type)
+    const policies = value_reasoning.revisedAttentionPolicies
+    console.log(`Generating response...`)
+    const response_reasoning = await generateResponse(q, choice_type, policies)
+    let response = response_reasoning.finalResponse
 
     console.log(`Interspersing considerations into response...`)
-    response_with_considerations = (
+    const response_with_considerations = (
       await intersperseConsiderations(q, response, choice_type, policies)
     ).response
-  }
 
-  console.log(`Done!\n\n\n`)
-
-  const reasoning = { context_reasoning, value_reasoning, response_reasoning }
-
-  await appendFile(
-    outfile,
-    JSON.stringify({
-      // Data formatted for training a model.
-      prompt: q,
-      conversations: [
-        {
-          role: "user",
-          content: q,
-        },
-        {
+    await appendFile(
+      outfile,
+      JSON.stringify({
+        // Data formatted for training a model.
+        prompt: q,
+        conversations: [
+          {
+            role: "user",
+            content: q,
+          },
+          {
+            role: "assistant",
+            content: response_with_considerations,
+          },
+        ],
+        messages: [
+          {
+            role: "user",
+            content: q,
+          },
+        ],
+        chosen: {
           role: "assistant",
           content: response_with_considerations,
         },
-      ],
-      messages: [
-        {
-          role: "user",
-          content: q,
+        rejected: {
+          role: "assistant",
+          content: naive_response,
         },
-      ],
-      chosen: {
-        role: "assistant",
-        content: response_with_considerations,
-      },
-      rejected: {
-        role: "assistant",
-        content: naive_response,
-      },
-      // Data formatted as-is, for inspecting the result.
-      reasoning,
-      response,
-      response_with_considerations,
-      choice_type,
-      policies,
-      naive_response,
-    }) + "\n"
-  )
+        // Data formatted as-is, for inspecting the result.
+        reasoning: { context_reasoning, value_reasoning, response_reasoning },
+        response,
+        response_with_considerations,
+        choice_type,
+        policies,
+        naive_response,
+      }) + "\n"
+    )
+
+    console.log(`Done!\n\n\n`)
+  }
 }
