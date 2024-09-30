@@ -1,9 +1,7 @@
 import { z } from "zod"
 import { genObj } from "./ai"
 
-export async function generateClarifyingQuestion(
-  q: string,
-) {
+export async function generateClarifyingQuestion(q: string) {
   return await genObj({
     prompt: `You will be provided with something a user might say to an AI chatbot. Your task is to think about how an AI chatbot might gather more information from the user in creative ways that fit the user's context and state.`,
     data: {
@@ -18,7 +16,7 @@ export async function generateClarifyingQuestion(
       typeOfResponseSuitable: z
         .string()
         .describe(
-          `Based on what we guess the user wants, and what choice type and considerations we believe to be relevant, what type of response is most appropriate? Sometimes, the user just needs a direct answer. Sometimes, assuming to much from their question is dangerous (we might be wrong about where they're at), and instead we might want to simply ask a clarifying question. Sometimes, it is very clear `
+          `Based on what we guess the user wants, and what choice type and considerations we believe to be relevant, what type of response is most appropriate? Think about what level of formality or tone would be most suitable, what level of directness or indirectness, whether to be playful or serious, etc.`
         ),
       response: z
         .string()

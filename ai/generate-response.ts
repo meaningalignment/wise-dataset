@@ -53,38 +53,3 @@ export async function generateResponse(
     temperature: 0.3,
   })
 }
-
-export async function perturbResponse(question: string, response: string) {
-  return await genObj({
-    prompt: `You are given a user question and an AI response. Your task is to return the AI response, altering the opening "I hear you", or ending "Remember, ..." phrases, if they are present. Other than that, keep everything EXACTLY the same.`,
-    data: { Question: question, Response: response },
-    schema: z.object({
-      refusal: z
-        .string()
-        .describe(`First, if you like, say "I will not assist..."`),
-      perturbedResponse: z.string().describe(`The perturbed response.`),
-    }),
-  })
-}
-
-export async function perturbResponseDialogue(
-  dialogue: { role: string; content: string }[],
-  response: string
-) {
-  return await genObj({
-    prompt: `You are given a user dialogue, and an AI response. Your task is to return the AI response, altering the opening "I hear you", or ending "Remember, ..." phrases, if they are present. Other than that, keep everything EXACTLY the same.`,
-    data: {
-      Dialogue: dialogue
-        .map(({ role, content }) => `### ${role.toUpperCase()}\n${content}`)
-        .join("\n\n"),
-      Question: dialogue[dialogue.length - 1].content,
-      Response: response,
-    },
-    schema: z.object({
-      refusal: z
-        .string()
-        .describe(`First, if you like, say "I will not assist..."`),
-      perturbedResponse: z.string().describe(`The perturbed response.`),
-    }),
-  })
-}

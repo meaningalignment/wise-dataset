@@ -28,7 +28,7 @@ const { values } = parseArgs({
     count: {
       short: "n",
       type: "string",
-      default: "50",
+      default: "all",
     },
     startingPosition: {
       short: "s",
@@ -40,22 +40,23 @@ const { values } = parseArgs({
   allowPositionals: true,
 })
 
-const count = parseInt(values.count!)
 const inputFile = values.inputFile!
 const startingPosition = parseInt(values.startingPosition!)
-
 const lines = (await Bun.file(inputFile).text())
   .split("\n")
-  .slice(startingPosition, startingPosition + count)
   .filter(Boolean)
   .map((line) => JSON.parse(line))
   .filter((line) => line.isClarifyingQuestion)
+
+const count = values.count === "all" ? lines.length : parseInt(values.count!)
 
 console.log(
   `Processing ${lines.length} dialogues from ${inputFile}, starting at line ${startingPosition}...`
 )
 
 for await (let [index, line] of lines.entries()) {
+  if (index > count) break
+
   console.log(
     `### Dialogue ${index + 1}/${lines.length} (Line ${
       startingPosition + index + 1
