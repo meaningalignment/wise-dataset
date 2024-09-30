@@ -27,7 +27,7 @@ export async function generateResponse(
       typeOfResponseSuitable: z
         .string()
         .describe(
-          `Based on what we guess the user wants, and what choice type and considerations we believe to be relevant, what type of response is most appropriate? Sometimes, the user just needs a direct answer. Sometimes, assuming to much from their question is dangerous (we might be wrong about where they're at), and instead we might want to simply ask a clarifying question. Sometimes, it is very clear `
+          `Based on what we guess the user wants, and what choice type and considerations we believe to be relevant, what type of response is most appropriate? Think about what level of formality or tone would be most suitable, what level of directness or indirectness, whether to be playful or serious, etc.`
         ),
       response: z
         .string()
@@ -39,13 +39,18 @@ export async function generateResponse(
         .describe(
           `Look at the response from the perspective of the user. Is there anything the user would feel unreceptive to? Have you accidentally been normative or prescriptive? Is there anything the user would not find inspiring or relevant, given their current situation, frame of mind, and what they like to fill their life with? Is there anywhere they'd feel lectured to or misdirected?`
         ),
+      clichesAndBadExamples: z
+        .string()
+        .describe(
+          `Look at the response from the perspective of the user. Are there bad examples that the user would find unhelpful or off-putting? Which examples might fit the users' life and situation better? Are there tropes like "I hear you", "Sometimes, ..." or "Remember, ..."? How could they be replaced with better turns of phrase?`
+        ),
       finalResponse: z
         .string()
         .describe(
-          `Finally, write another version of the response that avoids any problems you found. Avoid tropes like "I hear you", "Sometimes, ..." or "Remember, ..."`
+          `Finally, write another version of the response that avoids any problems you found.`
         ),
     }),
-    temperature: 0.4,
+    temperature: 0.3,
   })
 }
 

@@ -28,7 +28,12 @@ export async function generateClarifyingQuestion(
       unreceptiveness: z
         .string()
         .describe(
-          `Look at the response from the perspective of the user. Is there anything the user would feel unreceptive to? Have you accidentally been normative or prescriptive? Is there anything the user would not find inspiring or relevant, given their current situation, frame of mind, and what they like to fill their life with? Is there anywhere they'd feel lectured to or misdirected?`
+          `Look at the response from the perspective of the user. Is there anything the user would feel unreceptive to? Have you accidentally been normative or prescriptive? Is there anything the user would not find inspiring or relevant, given their current situation, frame of mind, and what they like to fill their life with? Is there anywhere they'd feel lectured to or directed towards a goal which is not their own?`
+        ),
+      clichesAndBadExamples: z
+        .string()
+        .describe(
+          `Look at the response from the perspective of the user. Are there tropes like "I hear you", "Sometimes, ..." or "Remember, ..."? How could they be replaced with better turns of phrase?`
         ),
       finalResponse: z
         .string()
@@ -36,6 +41,6 @@ export async function generateClarifyingQuestion(
           `Finally, write another version of the response that avoids any problems you found.`
         ),
     }),
-    temperature: 0.2,
+    temperature: 0.3,
   })
 }
