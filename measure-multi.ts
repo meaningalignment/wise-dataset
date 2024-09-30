@@ -5,7 +5,7 @@ import { embed } from "./ai/ai" // Make sure this import is correct
 // Example usage:
 // bun run filter -- -i inputs/cai-harmless.jsonl -n 250 -s 1000
 
-const outfile = `outputs/filter-${new Date()
+const outfile = `outputs/multi-relevance-${new Date()
   .toISOString()
   .replace(/:/g, "-")
   .replace(/\..+/, "")
@@ -63,29 +63,28 @@ const allEmbeddings = await embed(allChoiceTypes)
 for await (let [index, line] of lines.entries()) {
   if (index >= count) break // Stop processing after 'count' lines
 
-  const { reasoning, conversations } = JSON.parse(line)
+  const data = JSON.parse(line)
 
-  const pattern = /<value[^>]*>|<\/value>/g
-  const prompt = conversations[0].content.replace(pattern, "")
-  const userResponse = conversations[2].content.replace(pattern, "")
+  // const pattern = /<value[^>]*>|<\/value>/g
+  // const prompt = data.conversations[0].content.replace(pattern, "")
+  // const userResponse = data.conversations[2].content.replace(pattern, "")
 
-  const choiceType1 = reasoning.reasoning[0].context.finalChoiceType
-  const choiceType2 = reasoning.reasoning[1].context.finalChoiceType
+  const choiceType1 = data.reasoning.reasoning[0].context.finalChoiceType
+  const choiceType2 = data.reasoning.reasoning[1].context.finalChoiceType
 
   console.log(`### Processing line ${index + 1}/${count}`)
 
   const embedding1 = allEmbeddings[index * 2]
   const embedding2 = allEmbeddings[index * 2 + 1]
-  const contextRequiredLikelihood = cosineDistance(embedding1, embedding2)
+  const choiceTypesDistance = cosineDistance(embedding1, embedding2)
 
   await appendFile(
     outfile,
     JSON.stringify({
-      prompt,
-      userResponse,
+      ...data,
       choiceType1,
       choiceType2,
-      contextRequiredLikelihood,
+      choiceTypesDistance,
     }) + "\n"
   )
 }

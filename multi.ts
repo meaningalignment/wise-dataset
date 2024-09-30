@@ -5,16 +5,20 @@ import { parseArgs } from "util"
 import seedrandom from "seedrandom"
 import { genTextMessages, mulberry32 } from "./ai/ai"
 import {
-  generateChoiceTypeResponse,
+  generateAskForContextResponse,
   generateFinalResponse,
   generateUserMessage,
 } from "./ai/generate-multiturn"
 import { intersperseConsiderations } from "./ai/intersperse-considerations"
+import {
+  perturbResponse,
+  perturbResponseDialogue,
+} from "./ai/generate-response"
 
 // Example usage:
 // bun run multi -- -i inputs/cai-harmless.txt -n 250 -s 1000
 
-const outfile = `outputs/multiturn-${new Date()
+const outfile = `outputs/multi-double-p-${new Date()
   .toISOString()
   .replace(/:/g, "-")
   .replace(/\..+/, "")
@@ -92,7 +96,7 @@ function getRandomTurnCount(distribution: Record<number, number>): number {
 
 type AssistantResponseReasoning =
   | Awaited<ReturnType<typeof generateFinalResponse>>
-  | Awaited<ReturnType<typeof generateChoiceTypeResponse>>
+  | Awaited<ReturnType<typeof generateAskForContextResponse>>
 
 type Reasoning = {
   response: AssistantResponseReasoning
@@ -168,7 +172,7 @@ for await (let [index, initialQuery] of lines.entries()) {
         policies
       )
     } else {
-      responseReasoning = await generateChoiceTypeResponse(
+      responseReasoning = await generateAskForContextResponse(
         history,
         choiceType,
         policies
@@ -199,9 +203,23 @@ for await (let [index, initialQuery] of lines.entries()) {
         ({ response }) => response.finalResponse === history[i].content
       )
 
+      let response = data!.response.finalResponse
+
+      if (
+        response.toLowerCase().startsWith("i hear you") ||
+        response.toLowerCase().includes("heart racing") ||
+        response.toLowerCase().includes("rock climbing")
+      ) {
+        console.log(`Perturbing response...`)
+        console.log("Response before perturbation: ", response)
+        response = (await perturbResponseDialogue(history, response))
+          .perturbedResponse
+        console.log("Response after perturbation: ", response)
+      }
+
       // Interspersing consideration tags into the message content.
       const interspersed = await intersperseConsiderations(
-        history[i].content,
+        response,
         data!.response.finalResponse,
         data!.context.finalChoiceType,
         data!.value.revisedAttentionPolicies

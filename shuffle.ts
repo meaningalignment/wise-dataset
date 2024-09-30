@@ -40,7 +40,9 @@ if (values.count !== "all") {
   inputName = inputName.replace(/\d+/, values.count!)
 }
 
-const outputFile = values.outputFile || `outputs/${inputName}-shuffled.jsonl`
+const mixAttribute = values.mixAttribute!
+const outputFile =
+  values.outputFile || `outputs/${inputName}-shuffled-${mixAttribute}.jsonl`
 const inputFile = values.inputFile!
 const numLines = values.count === "all" ? "all" : parseInt(values.count!, 10)
 
@@ -99,9 +101,11 @@ function replaceValueAttributes(
         consideration = attr.consideration
         break
       case "both":
-      default:
         choiceType = attr.choiceType
         consideration = attr.consideration
+        break
+      default:
+        throw new Error(`Invalid mix attribute: ${mixAttribute}`)
     }
 
     return `<value choice-type="${choiceType}" consideration="${consideration}">`
@@ -115,7 +119,6 @@ async function processDataset() {
     numLines === "all"
       ? dataset.length
       : Math.min(numLines + startPosition, dataset.length)
-  const mixAttribute = values.mixAttribute!
 
   for (let i = startPosition; i < linesToProcess; i++) {
     const randomSamples = getRandomSamples(dataset, i)
