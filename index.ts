@@ -39,23 +39,41 @@ for await (let [index, q] of lines.entries()) {
   const context_reasoning = await generateChoiceType(q)
   const choice_type = context_reasoning.finalChoiceType
   console.log(`Choice type: ${choice_type}`)
-  console.log(`Generating value...`)
-  const value_reasoning = await generateValue(q, choice_type)
-  const policies = value_reasoning.revisedAttentionPolicies
-  console.log(`Generating response...`)
-  const response_reasoning = await generateResponse(q, choice_type, policies)
-  let response = response_reasoning.finalResponse
+  let value_reasoning: any,
+    policies: any[],
+    response_reasoning: any,
+    response: string,
+    naive_response: string,
+    response_with_considerations: string
 
-  console.log(`Generating naive response...`)
-  const naive_response = await genText({
-    prompt: `You will be provided with something a user might say to an AI chatbot. Please respond as an especially wise chatbot might. Do not lecture the user.`,
-    userMessage: q,
-  })
+  if (context_reasoning["confidence"] < 70) {
+    console.log("Not applicable. Skipping further processing.")
+    value_reasoning =
+      response_reasoning =
+      response =
+      naive_response =
+      response_with_considerations =
+        "not applicable"
+    policies = []
+  } else {
+    console.log(`Generating value...`)
+    value_reasoning = await generateValue(q, choice_type)
+    policies = value_reasoning.revisedAttentionPolicies
+    console.log(`Generating response...`)
+    response_reasoning = await generateResponse(q, choice_type, policies)
+    response = response_reasoning.finalResponse
 
-  console.log(`Interspersing considerations into response...`)
-  const response_with_considerations = (
-    await intersperseConsiderations(q, response, choice_type, policies)
-  ).response
+    console.log(`Generating naive response...`)
+    naive_response = await genText({
+      prompt: `You will be provided with something a user might say to an AI chatbot. Please respond as an especially wise chatbot might. Do not lecture the user.`,
+      userMessage: q,
+    })
+
+    console.log(`Interspersing considerations into response...`)
+    response_with_considerations = (
+      await intersperseConsiderations(q, response, choice_type, policies)
+    ).response
+  }
 
   console.log(`Done!\n\n\n`)
 
