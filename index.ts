@@ -5,6 +5,7 @@ import { genText } from "./ai/ai"
 import { parseArgs } from "util"
 import { generateResponse } from "./ai/generate-response"
 import { intersperseConsiderations } from "./ai/intersperse-considerations"
+import { generateClarifyingQuestion } from "./ai/generate-clarifying-question"
 
 // Add seed to command line options
 const { values } = parseArgs({
@@ -51,6 +52,9 @@ for await (let [index, q] of lines.entries()) {
   if (context_reasoning.confidence <= 60) {
     console.log(`Confidence too low, generating clarifying response...`)
 
+    const clarifyingQuestionReasoning = await generateClarifyingQuestion(q)
+    const { finalResponse: clarifyingResponse } = clarifyingQuestionReasoning
+
     await appendFile(
       outfile,
       JSON.stringify({
@@ -63,7 +67,7 @@ for await (let [index, q] of lines.entries()) {
           },
           {
             role: "assistant",
-            content: context_reasoning.clarifyingResponse,
+            content: clarifyingResponse,
           },
         ],
         messages: [
@@ -74,7 +78,7 @@ for await (let [index, q] of lines.entries()) {
         ],
         chosen: {
           role: "assistant",
-          content: context_reasoning.clarifyingResponse,
+          content: clarifyingResponse,
         },
         rejected: {
           role: "assistant",
@@ -82,8 +86,9 @@ for await (let [index, q] of lines.entries()) {
         },
         // Data formatted as-is, for inspecting the result.
         reasoning: { context_reasoning },
-        response: context_reasoning.clarifyingResponse,
+        response: clarifyingResponse,
         naive_response,
+        isClarifyingQuestion: true,
       }) + "\n"
     )
 
