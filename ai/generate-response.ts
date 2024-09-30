@@ -14,8 +14,6 @@ export async function generateResponse(
       "Relevant Considerations": policies,
     },
     schema: z.object({
-      // Clarifying question
-      // Answer Directly
       application: z
         .string()
         .describe(
@@ -26,7 +24,6 @@ export async function generateResponse(
         .describe(
           `Characterize the user asking the initial question. What is his/her mood? What is his/her state of mind? What kind of response would they be receptive to?`
         ),
-
       typeOfResponseSuitable: z
         .string()
         .describe(
@@ -48,7 +45,7 @@ export async function generateResponse(
           `Finally, write another version of the response that avoids any problems you found. Avoid tropes like "I hear you", "Sometimes, ..." or "Remember, ..."`
         ),
     }),
-    temperature: 0.2,
+    temperature: 0.4,
   })
 }
 
