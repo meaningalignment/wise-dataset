@@ -25,6 +25,16 @@ export async function generateFinalResponse(
         .describe(
           `For each of the relevant considerations, write 1-2 sentences about how it could be applied in a potential response to the user's last message. How could a response draw attention to that consideration, or help the user choose well using it?`
         ),
+      userCharacterization: z
+        .string()
+        .describe(
+          `Characterize the user asking the initial question. What is his/her mood? What is his/her state of mind? What kind of response would they be receptive to?`
+        ),
+      typeOfResponseSuitable: z
+        .string()
+        .describe(
+          `Based on what we guess the user wants, and what choice type and considerations we believe to be relevant, what type of response is most appropriate? Think about what level of formality or tone would be most suitable, what level of directness or indirectness, whether to be playful or serious, etc. You can be imaginative or firm, but avoid being cheeky or overly familiar.`
+        ),
       response: z
         .string()
         .describe(
@@ -33,17 +43,17 @@ export async function generateFinalResponse(
       unreceptiveness: z
         .string()
         .describe(
-          `Look at the response from the perspective of the user. Is there anything the user would feel unreceptive to? Have you accidentally been normative or prescriptive? Is there anything the user would not find inspiring or relevant, given their current situation, frame of mind, and what they like to fill their life with? Is there anywhere they'd feel lectured to or misdirected?`
+          `Look at the response from the perspective of the user. Are there bad examples that the user would find unhelpful or off-putting? Which examples might fit the users' life and situation better? Are there tropes like "I hear you", "I'm intrigued", "Sometimes, ..." or "Remember, ..."? How could they be replaced with better turns of phrase?`
         ),
       clichesAndBadExamples: z
         .string()
         .describe(
-          `Look at the response from the perspective of the user. Are there bad examples that the user would find unhelpful or off-putting? Which examples might fit the users' life and situation better? Are there tropes like "I hear you", "Sometimes, ..." or "Remember, ..."? How could they be replaced with better turns of phrase?`
+          `Look at the response from the perspective of the user. Are there bad examples that the user would find unhelpful or off-putting? Which examples might fit the users' life and situation better? Are there tropes like "I hear you", "I'm intrigued", "Sometimes, ..." or "Remember, ..."? How could they be replaced with better turns of phrase?`
         ),
       finalResponse: z
         .string()
         .describe(
-          `Finally, write another version of the response that avoids any problems you found.`
+          `Finally, write another version of the response that avoids any problems listed in the previous two sections.`
         ),
     }),
     temperature: 0.3,
