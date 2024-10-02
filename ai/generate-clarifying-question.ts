@@ -3,7 +3,7 @@ import { genObj } from "./ai"
 
 export async function generateClarifyingQuestion(q: string) {
   return await genObj({
-    prompt: `You will be provided with something a user might say to an AI chatbot. Your task is to think about how an AI chatbot might gather more information from the user in creative ways that fit the user's context and state.`,
+    prompt: `You will be provided with something a user might say to an AI chatbot. Your task is to think about how an AI chatbot might gather more information from the user in a way that fits the user's context and state.`,
     data: {
       "User's message": q,
     },
@@ -16,7 +16,7 @@ export async function generateClarifyingQuestion(q: string) {
       typeOfResponseSuitable: z
         .string()
         .describe(
-          `Based on what we guess the user wants, and what choice type and considerations we believe to be relevant, what type of response is most appropriate? Think about what level of formality or tone would be most suitable, what level of directness or indirectness, whether to be playful or serious, etc.`
+          `Based on this characterization, think about what level of formality or tone would be most suitable for gathering more information. What level of directness or indirectness? Should you be playful or serious? You can be imaginative or firm, but avoid being cheeky or overly familiar.`
         ),
       response: z
         .string()
@@ -26,17 +26,17 @@ export async function generateClarifyingQuestion(q: string) {
       unreceptiveness: z
         .string()
         .describe(
-          `Look at the response from the perspective of the user. Is there anything the user would feel unreceptive to? Have you accidentally been normative or prescriptive? Is there anything the user would not find inspiring or relevant, given their current situation, frame of mind, and what they like to fill their life with? Is there anywhere they'd feel lectured to or directed towards a goal which is not their own?`
+          `Look at the response from the perspective of the user. Is there anything the user would feel unreceptive to? Have you accidentally been normative or prescriptive? Is there anything the user would not find inspiring or relevant, given their current situation, frame of mind, and what they like to fill their life with? Is there anywhere they'd feel lectured to or misdirected? List these occurances, including any mention of avoiding harm, being ethical, or keeping things legal.`
         ),
-      clichesAndBadExamples: z
+      cliches: z
         .string()
         .describe(
-          `Look at the response from the perspective of the user. Are there tropes like "I hear you", "Sometimes, ..." or "Remember, ..."? How could they be replaced with better turns of phrase?`
+          `Look at the response from the perspective of the user. Are there tropes like "I hear you", "I'm intrigued", "Sometimes, ..." or "Remember, ..."? How could they be replaced with better turns of phrase?`
         ),
       finalResponse: z
         .string()
         .describe(
-          `Finally, write another version of the response that avoids any problems you found.`
+          `Finally, write another version of the response that avoids any problems listed in the previous two sections.`
         ),
     }),
     temperature: 0.3,

@@ -58,12 +58,12 @@ export async function generateChoiceType(
       counterArguments: z
         .string()
         .describe(
-          `Review what you wrote in "speculations" - are there possibilities there which would make it premature to assume this is what the user needs to choose between? Write a percentage chance next to each such possibility, trying not to exaggerate.`
+          `Review what you wrote in "speculations" - are there possibilities there which would make it premature to assume this is what the user needs to choose between? Write a percentage chance next to each such possibility. Please be as precise as possible.`
         ),
       confidence: z
         .number()
         .describe(
-          `Sum the percentages that you've got it wrong and subtract from 1. How confident does that mean you are that you have the choice type the user should face at this moment? Write a percentage from 0 to 100.`
+          `Sum the percentages from counterArguments, and subtract from 1. How confident are you that you have the choice type the user should face at this moment? Write a percentage from 0 to 100. Please be as precise as possible.`
         ),
     }),
   })

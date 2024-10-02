@@ -35,7 +35,7 @@ console.log(`Generating ${lines.length} responses from ${inputFile}...`)
 
 // main loop
 for await (let [index, q] of lines.entries()) {
-  console.log(`### Response ${index + 1}/${lines.length}`)
+  console.log(`\n\n\n### Response ${index + 1}/${lines.length}`)
   console.log(`-> ${q}`)
 
   console.log(`Generating naive response...`)
@@ -49,7 +49,7 @@ for await (let [index, q] of lines.entries()) {
   console.log(`Confidence: ${context_reasoning.confidence}`)
   console.log('Reasoning:', context_reasoning.counterArguments)
 
-  if (context_reasoning.confidence <= 60) {
+  if (context_reasoning.confidence < 75) {
     console.log(`Confidence too low, generating clarifying response...`)
 
     const clarifyingQuestionReasoning = await generateClarifyingQuestion(q)
@@ -147,6 +147,6 @@ for await (let [index, q] of lines.entries()) {
       }) + "\n"
     )
 
-    console.log(`Done!\n\n\n`)
+    console.log(`Done!`)
   }
 }
