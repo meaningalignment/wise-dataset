@@ -7,6 +7,7 @@ import {
   generateUserMessage,
 } from "./ai/generate-multiturn"
 import { intersperseConsiderations } from "./ai/intersperse-considerations"
+import { genTextMessages } from "./ai/ai"
 
 // Example usage:
 // bun run multi -- -i inputs/data.jsonl -n 250 -s 0
@@ -91,6 +92,12 @@ for await (let [index, line] of lines.entries()) {
     policies
   )
 
+  console.log(`Generating naive response...`)
+  const naiveResponse = await genTextMessages({
+    messages: history as any[],
+    systemPrompt: `You will be provided with something a user might say to an AI chatbot. Please respond as an especially wise chatbot might. Do not lecture the user.`,
+  })
+
   const response = responseReasoning.finalResponse
   history.push({ role: "assistant", content: response })
 
@@ -116,6 +123,10 @@ for await (let [index, line] of lines.entries()) {
     JSON.stringify({
       prompt: line.prompt,
       chosen: historyInterspersed[historyInterspersed.length - 1],
+      rejected: {
+        role: "assistant",
+        content: naiveResponse,
+      },
       conversations: historyInterspersed,
       messages: historyInterspersed.slice(0, -1),
       conversations_raw: history,

@@ -50,10 +50,14 @@ const rng = seedrandom("seed")
 
 async function loadDataset(filename: string) {
   const content = await readFile(filename, "utf-8")
-  return content
+  const dataset = content
     .split("\n")
     .filter(Boolean)
     .map((line) => JSON.parse(line))
+    .filter((line) => !line.isClarifyingQuestion)
+
+  console.log(dataset.length)
+  return dataset
 }
 
 function getRandomSamples(dataset: any[], exclude: number, count: number = 5) {
@@ -134,6 +138,7 @@ async function processDataset() {
     )
 
     dataset[i].rejected.content = modifiedContent
+    dataset[i].conversations = null // Remove this field, only used for SFT.
 
     await appendFile(outputFile, JSON.stringify(dataset[i]) + "\n")
   }
