@@ -5,3 +5,8 @@ node_modules/
 outputs/
 cache.sqlite
 cache-multi.sqlite
+
+inputs/local
+outputs/csvs
+outputs/gold
+outputs/old

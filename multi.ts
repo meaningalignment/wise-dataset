@@ -131,7 +131,7 @@ for await (let [index, line] of lines.entries()) {
       messages: historyInterspersed.slice(0, -1),
       conversations_raw: history,
       choice_type: choiceType,
-      attention_policies: policies,
+      policies: policies,
       reasoning: {
         context: choiceTypeReasoning,
         value: valueReasoning,
