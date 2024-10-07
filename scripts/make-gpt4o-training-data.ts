@@ -15,17 +15,14 @@ for await (const line of (await Bun.file(inputFile).text())
   .split("\n")
   .filter(Boolean)) {
   const json = JSON.parse(line) as {
-    q: string
+    prompt: string
+    conversations: { role: string; content: string }[]
     choiceType: string
     policies: string[]
     response: string
   }
   const output = {
-    messages: [
-      { role: "system", content: prompt },
-      { role: "user", content: json.q },
-      { role: "assistant", content: json.response },
-    ],
+    messages: [{ role: "system", content: prompt }, ...json.conversations],
   }
   await appendFile(outfile, JSON.stringify(output) + "\n")
 }
