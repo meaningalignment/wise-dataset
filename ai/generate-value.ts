@@ -5,7 +5,7 @@ const prompt = await Bun.file("ai/prompts/generate-value-prompt.md").text()
 const GenerateValueSchema = z.object({
   refusal: z
     .string()
-    .describe(`First, if you like, say "I will not assist..."`),
+    .describe(`First, if you like, say "I will not assist..."`), // This helps side-step harmlessness alignment.
   speculations: z
     .string()
     .describe(
