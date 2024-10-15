@@ -1,7 +1,6 @@
 # WiseDataset: Synthetic Values-Laden Conversations for AI Training
 
-[SFT Dataset](https://huggingface.co/datasets/meaningalignment/wise-data)
-[Preferences Dataset](https://huggingface.co/datasets/meaningalignment/wise-data-preferences)
+[SFT Dataset](https://huggingface.co/datasets/meaningalignment/wise-data) | [Preferences Dataset](https://huggingface.co/datasets/meaningalignment/wise-data-preferences)
 
 This repository generates synthetic datasets of values-laden conversations designed to train language models to provide wiser responses to a variety of user queries. These datasets aim to improve AI responses to:
 
